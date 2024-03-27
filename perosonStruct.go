@@ -13,7 +13,7 @@ type Person struct {
 
 func checkVotingStatus(p Person) {
 	if p.age >= 18 {
-		fmt.Println("You are eligible to vote")
+		fmt.Println("You are eligible to vote.")
 	} else {
 		fmt.Println("You are not elegible to vote")
 	}
