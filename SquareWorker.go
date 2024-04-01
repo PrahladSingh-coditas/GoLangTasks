@@ -3,42 +3,43 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 var wg sync.WaitGroup
 
-func squareWorker(numList []int) {
-	ch := make(chan int)
+func squareWorker(numList []int, ch chan int) {
+	defer wg.Done() // indicate that this goroutine is done
+	defer close(ch) // close the channel when all the send operations are completed
 
-	wg.Add(1)
-	go func() {
-		defer close(ch) //Basically cloase the channel when all the send operations are completed
-		for _, number := range numList {
-			ch <- (number * number)
-		}
-
-	}()
-
-	aggregateSquares(ch)
+	for _, number := range numList {
+		ch <- (number * number)
+	}
 }
 
 func aggregateSquares(ch chan int) {
 	defer wg.Done()
 
 	sum := 0
-
-	//The range creates an implicit loop that iterates over the channel's values until the channel is closed.
-	//Here the range does not work the way it used to work for slices
-	for receivingVal := range ch { //Here we are receiving the output from the channel
+	for receivingVal := range ch {
 		sum += receivingVal
 	}
 
-	fmt.Println("The aggregation of the square numbers is: ", sum)
+	fmt.Println("The aggregation of the square numbers is:", sum)
 }
 
 func main() {
+	start := time.Now() // Record the start time
+
 	numList := []int{1, 2, 3}
-	squareWorker(numList)
+	ch := make(chan int) // Create channel in main function scope
+
+	wg.Add(2) // Add two goroutines to wait for
+
+	go squareWorker(numList, ch)
+	go aggregateSquares(ch)
+
+	fmt.Println(time.Since(start))
 
 	wg.Wait()
 }
